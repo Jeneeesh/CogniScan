@@ -1,6 +1,4 @@
 
-### 4. docs/ARCHITECTURE.md
-
 ```markdown
 # Workflow Architecture
 
@@ -30,3 +28,4 @@
 - **Qdrant**: Vector store for document type matching
 - **Custom Agents**: For structured data extraction
 - **Flask Integration**: For transaction tracking
+```
