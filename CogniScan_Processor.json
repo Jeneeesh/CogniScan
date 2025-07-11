@@ -138,7 +138,7 @@
             },
             {
               "name": "Authorization",
-              "value": "Bearer 6bmtlEAg3Cpcv77FsrcJPMbnlyBGSi3q"
+              "value": "Bearer <your API KEY Here>"
             }
           ]
         },
@@ -322,7 +322,7 @@
           "parameters": [
             {
               "name": "Authorization",
-              "value": "Bearer 6bmtlEAg3Cpcv77FsrcJPMbnlyBGSi3q"
+              "value": "Bearer <Your API KEY here>"
             }
           ]
         },
@@ -382,7 +382,7 @@
           "parameters": [
             {
               "name": "Authorization",
-              "value": "Bearer 6bmtlEAg3Cpcv77FsrcJPMbnlyBGSi3q"
+              "value": "Bearer <Your API KEY here>"
             }
           ]
         },
@@ -415,7 +415,7 @@
           "parameters": [
             {
               "name": "Authorization",
-              "value": "Bearer 6bmtlEAg3Cpcv77FsrcJPMbnlyBGSi3q"
+              "value": "Bearer <Your API KEY here>"
             }
           ]
         },
