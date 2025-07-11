@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Webhook Response</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body { font-family: sans-serif; margin: 20px; background-color: #f8f9fa; color: #343a40; }
+        .container { background-color: #ffffff; padding: 30px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); max-width: 800px; margin: 20px auto; }
+        h1, h2 { color: #0056b3; margin-bottom: 20px; }
+        pre { background-color: #e9ecef; padding: 15px; border-radius: 5px; overflow-x: auto; white-space: pre-wrap; word-wrap: break-word; border: 1px solid #ced4da; }
+        .status-success { color: green; font-weight: bold; }
+        .status-error { color: red; font-weight: bold; }
+        .back-link { display: block; margin-top: 30px; text-align: center; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1 class="text-center">Webhook Response from n8n</h1>
+
+        <p><strong>Triggered via:</strong> <span class="badge bg-info text-dark">{{ source_route }}</span></p>
+
+        {% if n8n_response %}
+            <h2>Status: <span class="{% if n8n_response.status == 'success' %}status-success{% else %}status-error{% endif %}">{{ n8n_response.status | default('N/A') }}</span></h2>
+            <p><strong>Message:</strong> <em>{{ n8n_response.message | default('No specific message.') }}</em></p>
+
+            {% if transaction_id %}
+                <p><strong>Associated Transaction ID:</strong> <code>{{ transaction_id }}</code></p>
+            {% endif %}
+
+            <h3 class="mt-4">Full Data Received from n8n:</h3>
+            <pre>{{ n8n_response | tojson(indent=2) }}</pre>
+
+            {% if n8n_response.uploadedFilesInfo %}
+                <h3 class="mt-4">Uploaded Files (Info from n8n):</h3>
+                <ul class="list-group">
+                {% for file_info in n8n_response.uploadedFilesInfo %}
+                    <li class="list-group-item"><strong>{{ file_info.fileName }}</strong> ({{ (file_info.fileSize / 1024) | round(2) }} KB)</li>
+                {% endfor %}
+                </ul>
+            {% endif %}
+
+            {% if n8n_response.templateFileInfo %}
+                <h3 class="mt-4">Template File (Info from n8n):</h3>
+                <p class="mb-0"><strong>{{ n8n_response.templateFileInfo.fileName }}</strong> ({{ (n8n_response.templateFileInfo.fileSize / 1024) | round(2) }} KB)</p>
+            {% endif %}
+
+        {% else %}
+            <p class="alert alert-warning text-center">No response data from n8n was available.</p>
+        {% endif %}
+
+        <div class="back-link">
+            <a href="/" class="btn btn-primary">Go back to Upload Page</a>
+        </div>
+    </div>
+</body>
+</html>
