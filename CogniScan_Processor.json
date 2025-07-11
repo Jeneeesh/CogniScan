@@ -1,0 +1,915 @@
+{
+  "name": "CogniScan Processor",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "/flask-process",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        -1400,
+        -240
+      ],
+      "id": "9b44c30d-1177-4d71-a8d2-01faed124cab",
+      "name": "Webhook",
+      "webhookId": "55d11239-b502-4448-a8b0-8506c667e1b7"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.embeddingsMistralCloud",
+      "typeVersion": 1,
+      "position": [
+        100,
+        180
+      ],
+      "id": "9542590a-0f16-477e-b9af-be012279856f",
+      "name": "Embeddings Mistral Cloud1",
+      "credentials": {
+        "mistralCloudApi": {
+          "id": "UtxPekhsLqcxFPLk",
+          "name": "Mistral Cloud account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "content": "## Incoming file analysis\n**Webhook receiving requests from flask web application\n**Output template and Documents are separated for processing",
+        "height": 920,
+        "width": 560,
+        "color": 2
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -1460,
+        -580
+      ],
+      "typeVersion": 1,
+      "id": "3cc1e35f-6206-441a-8149-1b37a6d54495",
+      "name": "Sticky Note1"
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $binary.files.fileName.toLowerCase() }}",
+                    "rightValue": "pdf",
+                    "operator": {
+                      "type": "string",
+                      "operation": "endsWith"
+                    },
+                    "id": "d9c5d21b-c34e-4309-8cd3-b24d57fda7db"
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "PDF"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "72ceec88-4291-432f-ae38-1795fc8604a4",
+                    "leftValue": "={{ $binary.files.fileName.toLowerCase() }}",
+                    "rightValue": "\\.(png|jpg|jpeg|bmp)$",
+                    "operator": {
+                      "type": "string",
+                      "operation": "regex"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Image"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.2,
+      "position": [
+        -1040,
+        40
+      ],
+      "id": "719f9656-2e7e-448c-8594-bc70dba89537",
+      "name": "Check Files"
+    },
+    {
+      "parameters": {
+        "url": "=https://api.mistral.ai/v1/files/{{ $json.id }}/url ",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "expiry",
+              "value": "24"
+            }
+          ]
+        },
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Accept",
+              "value": "application/json"
+            },
+            {
+              "name": "Authorization",
+              "value": "Bearer 6bmtlEAg3Cpcv77FsrcJPMbnlyBGSi3q"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -680,
+        -240
+      ],
+      "id": "25145114-89fb-4c5d-8839-e199fb0e9b75",
+      "name": "Get signed URL"
+    },
+    {
+      "parameters": {
+        "mode": "retrieve-as-tool",
+        "toolName": "CogniScan_Knowledge_base",
+        "toolDescription": "Searches a knowledge base of document templates. Input: Text content. Output: Matching document type (e.g., \"Invoice\", \"Contract\") or \"Generic Document\" if no match.",
+        "qdrantCollection": {
+          "__rl": true,
+          "value": "CogniScan",
+          "mode": "id"
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.vectorStoreQdrant",
+      "typeVersion": 1.2,
+      "position": [
+        0,
+        40
+      ],
+      "id": "13025ca0-e57a-49b5-85a4-9ef35623ed35",
+      "name": "Qdrant Document Matcher",
+      "credentials": {
+        "qdrantApi": {
+          "id": "OJHnc8oA4zxLAh9k",
+          "name": "QdrantApi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "fromJson",
+        "binaryPropertyName": "template",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.extractFromFile",
+      "typeVersion": 1,
+      "position": [
+        -580,
+        -420
+      ],
+      "id": "67188aa2-e5e7-4533-a9ee-fcc40b135d18",
+      "name": "Extract Output Format"
+    },
+    {
+      "parameters": {
+        "mode": "combine",
+        "combineBy": "combineByPosition",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        160,
+        -420
+      ],
+      "id": "2511e3ea-d97a-43ad-9f4a-32199e9429c4",
+      "name": "Merge Output Template and Data"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Get the raw output string\nconst rawOutput = $input.all()[0].json.output;\n\n// Method 1: Extract JSON between ```json markers (most reliable)\nlet jsonString;\ntry {\n  // First try extracting between ```json markers\n  const matches = rawOutput.match(/```json\\n([\\s\\S]*?)\\n```/);\n  if (matches && matches[1]) {\n    jsonString = matches[1];\n  } else {\n    // Fallback: Try to find the first complete JSON object\n    const jsonStart = rawOutput.indexOf('{');\n    const jsonEnd = rawOutput.lastIndexOf('}') + 1;\n    jsonString = rawOutput.slice(jsonStart, jsonEnd);\n  }\n  \n  // Parse the JSON to validate it\n  const jsonData = JSON.parse(jsonString);\n  \n  // Return the clean JSON object\n  return jsonData;\n} catch (error) {\n  // If parsing fails, return error information\n  return {\n    error: \"Failed to parse JSON\",\n    details: error.message,\n    rawOutput: rawOutput,\n    extractedJson: jsonString || \"No JSON found\"\n  };\n}"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        720,
+        -300
+      ],
+      "id": "b750f88c-0448-4405-bd6b-d5a932b6d737",
+      "name": "Structure output data"
+    },
+    {
+      "parameters": {
+        "operation": "toJson",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.convertToFile",
+      "typeVersion": 1.1,
+      "position": [
+        920,
+        -240
+      ],
+      "id": "dff94926-9e59-47cd-973b-4ef688185c25",
+      "name": "Convert output to JSON"
+    },
+    {
+      "parameters": {
+        "operation": "write",
+        "fileName": "=./processed_files_storage/{{ $('Webhook').first().json.body.transaction_id }}.json",
+        "options": {
+          "append": false
+        }
+      },
+      "type": "n8n-nodes-base.readWriteFile",
+      "typeVersion": 1,
+      "position": [
+        1120,
+        -200
+      ],
+      "id": "445fa177-e5ca-49b1-8d67-2d6f4fc00320",
+      "name": "Write Output File"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://flask-app:5000/api/update_transaction_status",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"transaction_id\": \"{{$node['Webhook'].json['body']['transaction_id']}}\",\n  \"status\": \"Completed\",\n  \"document_type\":  \"{{ $node['Structure output data'].json['Form_Type'] || 'Identifying' }}\",\n  \"processed_file_name\": \"{{$node['Webhook'].json['body']['transaction_id']}}.json\",\n  \"processed_at\": \"{{new Date($now).toISOString()}}\",\n  \"results\": \"Completed\"\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1300,
+        -80
+      ],
+      "id": "5bb0b69a-faa6-4a56-a677-85901d706929",
+      "name": "Inform Completion of work"
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "// Clone the entire item then remove specific binary\nconst newItem = JSON.parse(JSON.stringify(item));\n\n// Remove Template (modify if key name differs)\nif (newItem.binary.template) {\n  delete newItem.binary.template;\n}\n\nreturn newItem;"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -1220,
+        -80
+      ],
+      "id": "17477d5b-11d3-4a4d-9771-6d7b49a1f23d",
+      "name": "Filter files for extraction"
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "// Clone the entire item then remove specific binary\nconst newItem = JSON.parse(JSON.stringify(item));\n\n// Remove Files (modify if key name differs)\nif (newItem.binary.files) {\n  delete newItem.binary.files;\n}\n\nreturn newItem;"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -1220,
+        -380
+      ],
+      "id": "c9ac7fc0-6518-458d-80b8-c151aec0c960",
+      "name": "Filter Output Template"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Get the first input item\nconst item = $input.all()[0];\n\n// Verify binary data exists\nif (!item?.binary?.data) {\n  // Alternative check for different binary formats\n  const binaryKey = Object.keys(item.binary || {})[0];\n  if (!binaryKey) {\n    throw new Error(\"No binary data found. Check if previous node outputs binary data correctly.\");\n  }\n  \n  // Get binary data from alternative format\n  const binaryData = item.binary[binaryKey].data;\n  const mimeType = item.binary[binaryKey].mimeType || 'image/png';\n  const base64Image = binaryData.toString('base64');\n  \n  return [{\n    json: {\n      imageUrl: `data:${mimeType};base64,${base64Image}`,\n      fileName: item.binary[binaryKey].fileName\n    }\n  }];\n}\n\n// Standard processing if binary.data exists\nconst base64Image = item.binary.data.toString('base64');\nconst mimeType = item.binary.mimeType || 'image/png';\n\nreturn [{\n  json: {\n    imageUrl: `data:${mimeType};base64,${base64Image}`,\n    fileName: item.binary.fileName\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -840,
+        160
+      ],
+      "id": "49b168e5-631f-49db-991f-4aa0a263b51c",
+      "name": "Pick images for OCR"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.mistral.ai/v1/chat/completions",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer 6bmtlEAg3Cpcv77FsrcJPMbnlyBGSi3q"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"model\": \"pixtral-12b-2409\",\n  \"messages\": [\n    {\n      \"role\": \"user\",\n      \"content\": [\n        {\n          \"type\": \"text\",\n          \"text\": \"What is the form name? Provide form name and all readable contents in a Markdown format. No explanation needed. If you could not identify form name, respond 'Unknown'\"\n        },\n        {\n          \"type\": \"image_url\",\n          \"image_url\": \"{{ $json.imageUrl }}\"\n        }\n      ]\n    }\n  ],\n  \"max_tokens\": 1000\n} ",
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "json"
+            }
+          }
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -600,
+        160
+      ],
+      "id": "4598cdd8-560f-4523-9094-810e1ae4f962",
+      "name": "Mistral Image Parser"
+    },
+    {
+      "parameters": {
+        "jsCode": "return [\n  {\n    json: {\n      content: $input.first().json.choices[0].message.content,\n    }\n  }\n];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -360,
+        160
+      ],
+      "id": "34951395-956d-4894-9926-8d7adb085643",
+      "name": "Receive Mistral Image OCR"
+    },
+    {
+      "parameters": {
+        "sessionIdType": "customKey",
+        "sessionKey": "{{transaction_id}}"
+      },
+      "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+      "typeVersion": 1.3,
+      "position": [
+        -60,
+        160
+      ],
+      "id": "21c349c1-b356-4d5f-b149-dc87d80ca9d9",
+      "name": "Simple Memory"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.mistral.ai/v1/ocr",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer 6bmtlEAg3Cpcv77FsrcJPMbnlyBGSi3q"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"model\": \"mistral-ocr-latest\",\n  \"document\": {\n    \"type\": \"document_url\",\n    \"document_url\": \"{{ $json.url }}\"\n  },\n  \"include_image_base64\": true\n} ",
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "json"
+            }
+          }
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -520,
+        -200
+      ],
+      "id": "dcf276b1-4aed-443a-88e0-c994ed84d934",
+      "name": "Get Mistral OCR Output"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.mistral.ai/v1/files",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer 6bmtlEAg3Cpcv77FsrcJPMbnlyBGSi3q"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "multipart-form-data",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "purpose",
+              "value": "ocr"
+            },
+            {
+              "parameterType": "formBinaryData",
+              "name": "file",
+              "inputDataFieldName": "files"
+            }
+          ]
+        },
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "json"
+            }
+          }
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -840,
+        -200
+      ],
+      "id": "22b06763-4186-482f-9f08-d14ff8079327",
+      "name": "Upload PDF to Mistral"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Combine markdown from all pages into one string\nlet combinedMarkdown = '';\nfor (const page of $json.pages) {\n  combinedMarkdown += page.markdown + '\\n\\n';\n}\nreturn [{ json: { content: combinedMarkdown } }];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -340,
+        -240
+      ],
+      "id": "35aaa1f3-92ca-40b7-9718-8802c934a2e3",
+      "name": "Receive Mistral PDF OCR"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Your task is to analyze the provided markdown content:\n\n{{ $input.all()[0].json.content }}\n\nand perform the following actions:\n\nIdentify the Form Type:\n\nIdentify all keys and values.\n\nEnsure that if any key-value is repeated, all key-value pairs are included in the output.\n\nReturn strictly valid JSON without markdown formatting, explanations, or code blocks\n\nSample output format:\n\n{\n  \"Form Type\": \"Invoice\",\n  \"Line Items\": {\n    \"Invoice_Number\": \"\",\n    \"Invoice_Date\": \"\",\n    \"Due_Date\": \"\",\n    \"Purchase_Order_Number\": \"\",\n    \"Total_Amount_Due\": \"\",\n    \"Subtotal\": \"\",\n    \"Total_Tax_Amount\": \"\",\n    \"Currency\": \"\",\n    \"Payment_Terms\": \"\",\n    \"Vendor_Name\": \"\",\n    \"Vendor_Address\": \"\",\n    \"Vendor_Tax_ID_VAT_Number\": \"\",\n    \"Vendor_Bank_Name\": \"\",\n    \"Vendor_Bank_Account_Number\": \"\",\n    \"Vendor_Bank_IFSC_SWIFT_Code\": \"\",\n    \"Customer_Name\": \"\",\n    \"Billing_Address\": \"\",\n    \"Shipping_Address\": \"\",\n    \"Customer_Tax_ID_VAT_Number\": \"\"\n  },\n  \"Table\": [\n    {\n      \"ID\": \"1\",\n      \"Description\": \"\",\n      \"Tax\": \"\",\n      \"Amount\": \"\"\n    },\n    {\n      \"ID\": \"2\",\n      \"Description\": \"\",\n      \"Tax\": \"\",\n      \"Amount\": \"\"\n    },\n    {\n      \"ID\": \"3\",\n      \"Description\": \"\",\n      \"Tax\": \"\",\n      \"Amount\": \"\"\n    }\n  ]\n}\n",
+        "options": {
+          "systemMessage": "You are an AI Agent designed to analyze Markdown content and extract specific information based on user instructions. Your tasks include identifying form types and converting data into a specified json format. Follow these guidelines to accomplish the tasks:\n\nNo preceding sentences like 'Here is your...'\nNo summary sentence at the end of the output\nNo Markdown code blocks (```json)\nNo Explanations, notes, or disclaimers\n\nYour response must be:\n- 100% valid JSON\n- No outer quotes or string wrapping\n- No additional formatting"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2,
+      "position": [
+        -140,
+        -260
+      ],
+      "id": "0036d8a5-4f06-445e-a62c-c0a19fe90a58",
+      "name": "Document identifying Agent"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Your task is to read content and provide output in defined structure:\n\nOutput structure :{{ JSON.stringify($input.all()[0].json.data) }} \n\nContent to insert in the output: {{ $input.all()[0].json.output }}\n\nIf there is a Table in the structre, rows should be created based on the number of items in the output.\n\nUse key meaning to map data to output structure\n\nReturn strictly valid JSON without markdown formatting, explanations, or code blocks",
+        "options": {
+          "systemMessage": "You are an expert data extraction assistant. Create structured JSON output based on the instruction. \nFollow these guidelines to accomplish the tasks:\nNo preceding sentences like 'Here is your...'\nNo summary sentence at the end of the output\nNo Markdown code blocks (```json)\nNo Explanations, notes, or disclaimers\n\nYour response must be:\n- 100% valid JSON\n- No outer quotes or string wrapping\n- No additional formatting"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2,
+      "position": [
+        380,
+        -340
+      ],
+      "id": "16d9d68b-bdaa-4bf0-8a78-2b053f7ef6e6",
+      "name": "Output Data structuring Agent"
+    },
+    {
+      "parameters": {
+        "content": "## Extract data using Mistral OCR\n**Separate end points for PDF and Images",
+        "height": 920,
+        "width": 700,
+        "color": 4
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -880,
+        -580
+      ],
+      "typeVersion": 1,
+      "id": "948544e8-9513-472c-b22c-9427838cbcc2",
+      "name": "Sticky Note2"
+    },
+    {
+      "parameters": {
+        "content": "## Document type analyzing agent\n**Agent uses a RAG to identify document type\n**Once the document type is analyzed, the Agent decides the relevant fields to be picked up",
+        "height": 920,
+        "width": 480,
+        "color": 6
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -160,
+        -580
+      ],
+      "typeVersion": 1,
+      "id": "b760e6fa-9a6f-43d8-8e50-2e7791180a21",
+      "name": "Sticky Note3"
+    },
+    {
+      "parameters": {
+        "content": "## Output format preparing agent\n**Agent converts the standard output into the template provided by the user",
+        "height": 920,
+        "width": 520,
+        "color": 3
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        340,
+        -580
+      ],
+      "typeVersion": 1,
+      "id": "ebe30784-e3fb-41c2-87fa-6eb4f38549d6",
+      "name": "Sticky Note4"
+    },
+    {
+      "parameters": {
+        "content": "## Save the output the update the transaction status\n**The custom output is saved for user to download and respond to web application with completion status",
+        "height": 920,
+        "width": 600,
+        "color": 2
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        880,
+        -580
+      ],
+      "typeVersion": 1,
+      "id": "a27816e5-91d3-44ef-a808-43f1d1cd1c41",
+      "name": "Sticky Note5"
+    },
+    {
+      "parameters": {
+        "sessionIdType": "customKey",
+        "sessionKey": "SimpleKey"
+      },
+      "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+      "typeVersion": 1.3,
+      "position": [
+        560,
+        -100
+      ],
+      "id": "2b5fe284-4b04-4d9f-9ac8-946caf7d3bb2",
+      "name": "Simple Memory1"
+    },
+    {
+      "parameters": {
+        "model": "mistral-medium",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatMistralCloud",
+      "typeVersion": 1,
+      "position": [
+        -120,
+        -100
+      ],
+      "id": "589606d2-f597-4b92-8a7b-0b048c16bbcc",
+      "name": "Mistral Cloud Chat Model",
+      "credentials": {
+        "mistralCloudApi": {
+          "id": "UtxPekhsLqcxFPLk",
+          "name": "Mistral Cloud account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "model": "mistral-medium",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatMistralCloud",
+      "typeVersion": 1,
+      "position": [
+        400,
+        -100
+      ],
+      "id": "d04b854d-af50-47ae-b921-4e1f1df32cda",
+      "name": "Mistral Cloud Chat Model1",
+      "credentials": {
+        "mistralCloudApi": {
+          "id": "UtxPekhsLqcxFPLk",
+          "name": "Mistral Cloud account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Filter Output Template",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Filter files for extraction",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Embeddings Mistral Cloud1": {
+      "ai_embedding": [
+        [
+          {
+            "node": "Qdrant Document Matcher",
+            "type": "ai_embedding",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check Files": {
+      "main": [
+        [
+          {
+            "node": "Upload PDF to Mistral",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Pick images for OCR",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get signed URL": {
+      "main": [
+        [
+          {
+            "node": "Get Mistral OCR Output",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Qdrant Document Matcher": {
+      "ai_tool": [
+        [
+          {
+            "node": "Document identifying Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract Output Format": {
+      "main": [
+        [
+          {
+            "node": "Merge Output Template and Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge Output Template and Data": {
+      "main": [
+        [
+          {
+            "node": "Output Data structuring Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Structure output data": {
+      "main": [
+        [
+          {
+            "node": "Convert output to JSON",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Convert output to JSON": {
+      "main": [
+        [
+          {
+            "node": "Write Output File",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Write Output File": {
+      "main": [
+        [
+          {
+            "node": "Inform Completion of work",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Inform Completion of work": {
+      "main": [
+        []
+      ]
+    },
+    "Filter files for extraction": {
+      "main": [
+        [
+          {
+            "node": "Check Files",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Filter Output Template": {
+      "main": [
+        [
+          {
+            "node": "Extract Output Format",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Pick images for OCR": {
+      "main": [
+        [
+          {
+            "node": "Mistral Image Parser",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Mistral Image Parser": {
+      "main": [
+        [
+          {
+            "node": "Receive Mistral Image OCR",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Receive Mistral Image OCR": {
+      "main": [
+        [
+          {
+            "node": "Document identifying Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Simple Memory": {
+      "ai_memory": [
+        [
+          {
+            "node": "Document identifying Agent",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Mistral OCR Output": {
+      "main": [
+        [
+          {
+            "node": "Receive Mistral PDF OCR",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Upload PDF to Mistral": {
+      "main": [
+        [
+          {
+            "node": "Get signed URL",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Receive Mistral PDF OCR": {
+      "main": [
+        [
+          {
+            "node": "Document identifying Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Document identifying Agent": {
+      "main": [
+        [
+          {
+            "node": "Merge Output Template and Data",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Output Data structuring Agent": {
+      "main": [
+        [
+          {
+            "node": "Structure output data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Simple Memory1": {
+      "ai_memory": [
+        [
+          {
+            "node": "Output Data structuring Agent",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Mistral Cloud Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Document identifying Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Mistral Cloud Chat Model1": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Output Data structuring Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "b7815453-037a-4626-bbb5-83f403c270ea",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "85eb6f6df9792ded1d6534bc6329f392e1529846ed89d6d935462071b5df9cb8"
+  },
+  "id": "o2fMhYOnQmBphh7P",
+  "tags": []
+}
